@@ -1,0 +1,6 @@
+{
+  "name": "Dream Haven Mattresses",
+  "description": "21st-century luxury mattress store featuring a sleep preference quiz, interactive product comparisons, secure role-based admin dashboard, and real-time WebSocket inventory management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
