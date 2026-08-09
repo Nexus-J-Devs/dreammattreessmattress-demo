@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useWebSocket } from '../context/WebSocketContext';
-import { Phone, Mail, Moon, Sliders, ShieldCheck, Sparkles, Layers, ChevronRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Phone, Mail, Moon, Sliders, ShieldCheck, Sparkles, Layers, ChevronRight, Shield, LogOut } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'store' | 'quiz' | 'compare' | 'reassurance' | 'contact' | 'admin';
@@ -11,7 +12,14 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, compareCount, openQuiz }) => {
   const { isConnected } = useWebSocket();
+  const { isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    setActiveTab('store');
+    setMobileMenuOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white text-[#1A1C1E] border-b border-gray-200 shadow-sm">
@@ -126,6 +134,28 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, compare
           >
             Store & Hotline
           </button>
+
+          {/* Admin Link */}
+          {isAdmin && (
+            <div className="flex items-center gap-1 pl-2 border-l border-gray-300">
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+                  activeTab === 'admin' ? 'bg-amber-100 text-amber-700' : 'text-amber-600 hover:bg-amber-50'
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                Admin Dashboard
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1.5"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </nav>
 
         {/* Mobile Action Buttons */}
@@ -183,6 +213,28 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, compare
             <span>Store & Phone Hotline (+1 555-012-9943)</span>
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </button>
+
+          {/* Admin Link Mobile */}
+          {isAdmin && (
+            <>
+              <div className="border-t border-gray-200 pt-2">
+                <button
+                  onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }}
+                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 flex justify-between items-center"
+                >
+                  <span className="flex items-center gap-2"><Shield className="w-4 h-4" /> Admin Dashboard</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 flex justify-between items-center mt-1"
+                >
+                  <span className="flex items-center gap-2"><LogOut className="w-4 h-4" /> Logout</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </header>
