@@ -113,7 +113,7 @@ function requireAdminAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-// PUBLIC API ROUTES
+// PUBLIC API ROUTES (must come BEFORE Vite middleware)
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
@@ -388,19 +388,39 @@ app.post('/api/admin/simulate-low-stock', requireAdminAuth, (req, res) => {
 // START EXPRESS & VITE MIDDLEWARE
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    // Development mode with Vite
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
+    
+    // Use Vite middleware AFTER API routes
     app.use(vite.middlewares);
-    // Fallback route for SPA (handles /admin, /quiz, etc.)
+    
+    // Fallback for SPA routes - serve index.html for all non-API routes
     app.get('*', (req, res) => {
-      res.redirect('/index.html');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      vite.transformIndexHtml(req.originalUrl, `
+        <!doctype html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Dream Haven Mattress | Store</title>
+          </head>
+          <body>
+            <div id="root"></div>
+            <script type="module" src="/src/main.tsx"><\/script>
+          </body>
+        </html>
+      `).then(html => res.end(html));
     });
   } else {
+    // Production mode - serve static files
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    // Fallback route for SPA in production (handles /admin, /quiz, etc.)
+    
+    // Fallback for SPA routes in production
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
