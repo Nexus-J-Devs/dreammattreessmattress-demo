@@ -393,9 +393,14 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+    // Fallback route for SPA (handles /admin, /quiz, etc.)
+    app.get('*', (req, res) => {
+      res.redirect('/index.html');
+    });
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
+    // Fallback route for SPA in production (handles /admin, /quiz, etc.)
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
