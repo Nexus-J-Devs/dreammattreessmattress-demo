@@ -3,6 +3,7 @@ import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
+import fs from 'fs';
 import { INITIAL_MATTRESSES, INITIAL_DISCOUNTS } from './src/data/mattresses';
 import { Mattress, QuizAnswers, QuizSubmission, DiscountPromo, WSNotification } from './src/types';
 
@@ -398,22 +399,19 @@ async function startServer() {
     app.use(vite.middlewares);
     
     // Fallback for SPA routes - serve index.html for all non-API routes
-    app.get('*', (req, res) => {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      vite.transformIndexHtml(req.originalUrl, `
-        <!doctype html>
-        <html lang="en">
-          <head>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Dream Haven Mattress | Store</title>
-          </head>
-          <body>
-            <div id="root"></div>
-            <script type="module" src="/src/main.tsx"><\/script>
-          </body>
-        </html>
-      `).then(html => res.end(html));
+    app.use((req, res, next) => {
+      // Skip if this is a static asset
+      if (req.path.includes('.')) {
+        return next();
+      }
+      
+      // Skip if Vite already handled it
+      if (res.headersSent) {
+        return;
+      }
+      
+      // Serve the root index.html which Vite will transform
+      res.type('text/html').sendFile(path.resolve(__dirname, 'index.html'));
     });
   } else {
     // Production mode - serve static files
@@ -421,7 +419,12 @@ async function startServer() {
     app.use(express.static(distPath));
     
     // Fallback for SPA routes in production
-    app.get('*', (_req, res) => {
+    app.use((req, res) => {
+      // Skip if this is a static asset request
+      if (req.path.includes('.')) {
+        return res.status(404).send('Not found');
+      }
+      
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
